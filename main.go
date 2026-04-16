@@ -58,6 +58,22 @@ func loadStats() Stats {
 	}
 	var s Stats
 	_ = json.Unmarshal(file, &s)
+
+	today := time.Now().Format("2006-01-02")
+	savedDay := ""
+	if len(s.LastUpdated) >= 10 {
+		savedDay = s.LastUpdated[:10]
+	}
+	if savedDay != today {
+		return Stats{
+			TotalDrunk:  0,
+			DailyGoal:   s.DailyGoal,
+			Missing:     s.DailyGoal,
+			LastUpdated: today,
+			Events:      []Event{},
+		}
+	}
+
 	// Recalcula o missing no load para garantir consistência
 	s.Missing = s.DailyGoal - s.TotalDrunk
 	if s.Missing < 0 {
