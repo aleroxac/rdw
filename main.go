@@ -20,15 +20,19 @@ type Event struct {
 	Timestamp string `json:"timestamp"`
 }
 
-type Stats struct {
-	TotalDrunk  int     `json:"total_drunk"`
-	DailyGoal   int     `json:"daily_goal"`
-	Missing     int     `json:"missing"` // Novo campo: quanto falta para a meta
-	LastUpdated string  `json:"last_updated"`
-	Events      []Event `json:"events"`
+type DayStats struct {
+	TotalDrunk int     `json:"total_drunk"`
+	DailyGoal  int     `json:"daily_goal"`
+	Missing    int     `json:"missing"`
+	Events     []Event `json:"events"`
 }
 
-var currentStats Stats
+type WaterFile struct {
+	LastUpdated string              `json:"last_updated"`
+	Events      map[string]DayStats `json:"events"`
+}
+
+var currentStats DayStats
 var configPath string
 
 func init() {
@@ -44,54 +48,56 @@ func main() {
 	systray.Run(onReady, onExit)
 }
 
-func loadStats() Stats {
+func loadStats() DayStats {
+	today := time.Now().Format("2006-01-02")
+
 	file, err := os.ReadFile(configPath)
 	if err != nil {
-		// Meta de 4250ml [cite: 2026-03-06]
-		return Stats{
-			TotalDrunk:  0,
-			DailyGoal:   4250,
-			Missing:     4250,
-			LastUpdated: time.Now().Format("2006-01-02"),
-			Events:      []Event{},
-		}
-	}
-	var s Stats
-	_ = json.Unmarshal(file, &s)
-
-	today := time.Now().Format("2006-01-02")
-	savedDay := ""
-	if len(s.LastUpdated) >= 10 {
-		savedDay = s.LastUpdated[:10]
-	}
-	if savedDay != today {
-		return Stats{
-			TotalDrunk:  0,
-			DailyGoal:   s.DailyGoal,
-			Missing:     s.DailyGoal,
-			LastUpdated: today,
-			Events:      []Event{},
-		}
+		return DayStats{DailyGoal: 4250, Missing: 4250, Events: []Event{}}
 	}
 
-	// Recalcula o missing no load para garantir consistência
-	s.Missing = s.DailyGoal - s.TotalDrunk
-	if s.Missing < 0 {
-		s.Missing = 0
+	var wf WaterFile
+	_ = json.Unmarshal(file, &wf)
+
+	if wf.Events == nil {
+		return DayStats{DailyGoal: 4250, Missing: 4250, Events: []Event{}}
 	}
-	return s
+
+	day, ok := wf.Events[today]
+	if !ok {
+		dailyGoal := 4250
+		var lastDate string
+		for date, d := range wf.Events {
+			if date > lastDate {
+				lastDate = date
+				dailyGoal = d.DailyGoal
+			}
+		}
+		return DayStats{DailyGoal: dailyGoal, Missing: dailyGoal, Events: []Event{}}
+	}
+
+	day.Missing = max(day.DailyGoal-day.TotalDrunk, 0)
+	return day
 }
 
 func saveStats() {
-	currentStats.LastUpdated = time.Now().Format("2006-01-02 15:04:05")
+	today := time.Now().Format("2006-01-02")
 
-	// Atualiza o missing antes de salvar
-	currentStats.Missing = currentStats.DailyGoal - currentStats.TotalDrunk
-	if currentStats.Missing < 0 {
-		currentStats.Missing = 0
+	var wf WaterFile
+	file, err := os.ReadFile(configPath)
+	if err == nil {
+		_ = json.Unmarshal(file, &wf)
+	}
+	if wf.Events == nil {
+		wf.Events = make(map[string]DayStats)
 	}
 
-	data, _ := json.MarshalIndent(currentStats, "", "  ")
+	currentStats.Missing = max(currentStats.DailyGoal-currentStats.TotalDrunk, 0)
+
+	wf.LastUpdated = time.Now().Format(time.RFC3339)
+	wf.Events[today] = currentStats
+
+	data, _ := json.MarshalIndent(wf, "", "  ")
 	_ = os.WriteFile(configPath, data, 0644)
 }
 
