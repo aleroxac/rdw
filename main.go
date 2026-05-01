@@ -103,23 +103,23 @@ func saveStats() {
 
 func onReady() {
 	systray.SetIcon(iconData)
-	systray.SetTooltip(fmt.Sprintf("RDW - Meta: %dml", currentStats.DailyGoal))
+	systray.SetTooltip(fmt.Sprintf("RDW - Goal: %dml", currentStats.DailyGoal))
 
-	mStatus := systray.AddMenuItem(fmt.Sprintf("Progresso: %d/%dml", currentStats.TotalDrunk, currentStats.DailyGoal), "")
+	mStatus := systray.AddMenuItem(fmt.Sprintf("Progress: %d/%dml", currentStats.TotalDrunk, currentStats.DailyGoal), "")
 	mStatus.Disable()
 	systray.AddSeparator()
 
-	m80 := systray.AddMenuItem("Golão (80ml)", "Benchmark 80ml")
-	m1000 := systray.AddMenuItem("Garrafa (1000ml)", "Tupppaware 1L")
-	m1500 := systray.AddMenuItem("Garrafona (1500ml)", "Normalzona 1.5L")
+	m80 := systray.AddMenuItem("80ml", "")
+	m1000 := systray.AddMenuItem("1000ml", "")
+	m1500 := systray.AddMenuItem("1500ml", "")
 	systray.AddSeparator()
-	mQuit := systray.AddMenuItem("Sair", "")
+	mQuit := systray.AddMenuItem("Quit", "")
 
 	go func() {
 		ticker := time.NewTicker(15 * time.Minute)
 		for range ticker.C {
 			if currentStats.TotalDrunk < currentStats.DailyGoal {
-				beeep.Alert("Hidratação!", fmt.Sprintf("Faltam %dml para bater sua meta!", currentStats.Missing), "")
+				beeep.Alert("Hydration Reminder!", fmt.Sprintf("Missing %dml to reach your goal!", currentStats.Missing), "")
 			}
 		}
 	}()
@@ -151,9 +151,9 @@ func addWater(amount int, item *systray.MenuItem) {
 	saveStats() // saveStats já recalcula o missing
 
 	percentage := (float64(currentStats.TotalDrunk) / float64(currentStats.DailyGoal)) * 100
-	item.SetTitle(fmt.Sprintf("Progresso: %d/%dml (%.1f%%)", currentStats.TotalDrunk, currentStats.DailyGoal, percentage))
+	item.SetTitle(fmt.Sprintf("Progress: %d/%dml (%.1f%%)", currentStats.TotalDrunk, currentStats.DailyGoal, percentage))
 
-	beeep.Notify("RDW", fmt.Sprintf("Faltam %dml. Total: %dml", currentStats.Missing, currentStats.TotalDrunk), "")
+	beeep.Notify("RDW", fmt.Sprintf("Missing %dml. Total: %dml", currentStats.Missing, currentStats.TotalDrunk), "")
 }
 
 func onExit() {}
