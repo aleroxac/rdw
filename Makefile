@@ -43,7 +43,7 @@ run: ## run the app
 	@go run ./...
 
 .PHONY: deploy
-deploy: ## deploy the app
+deploy: build ## deploy the app
 	@sudo mv .build/$(BIN_NAME) /usr/local/bin/$(BIN_NAME)
 	@rmdir .build
 	@sudo chmod +x /usr/local/bin/$(BIN_NAME)
