@@ -157,3 +157,4 @@ func addWater(amount int, item *systray.MenuItem) {
 }
 
 func onExit() {}
+
