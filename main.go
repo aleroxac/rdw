@@ -109,7 +109,7 @@ func onReady() {
 	mStatus.Disable()
 	systray.AddSeparator()
 
-	m80 := systray.AddMenuItem("80ml", "")
+	m80 := systray.AddMenuItem("100ml", "")
 	m1000 := systray.AddMenuItem("1000ml", "")
 	m1500 := systray.AddMenuItem("1500ml", "")
 	systray.AddSeparator()
@@ -127,8 +127,8 @@ func onReady() {
 	go func() {
 		for {
 			select {
-			case <-m80.ClickedCh:
-				addWater(80, mStatus)
+			case <-m100.ClickedCh:
+				addWater(100, mStatus)
 			case <-m1000.ClickedCh:
 				addWater(1000, mStatus)
 			case <-m1500.ClickedCh:
