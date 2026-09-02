@@ -22,8 +22,8 @@ jobs:
       contents: read
       pull-requests: read
       issues: read
-      id-token: write
-      actions: read # Required for Claude to read CI results on PRs
+      id-token: write   # Required for Claude to allow the Action get the GitHub OIDC token
+      actions: read     # Required for Claude to read CI results on PRs
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -34,7 +34,15 @@ jobs:
         id: claude
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # --- auth: using the workload identity credentials  
+          anthropic_federation_rule_id: "fdrl_01XGgUXDafTjtV8iEehfmw6p"
+          anthropic_organization_id: "e130a3c2-4b87-4998-9ded-4add4098de93"
+          anthropic_service_account_id: "svac_01ECs9MpWwsLYQ7uJAShcpwf"
+          anthropic_workspace_id: "wrkspc_01B7LpYC5wi88TPDBWfCezuc"
+
+          # --- auth: using the api key
+          # anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          
 
           # This is an optional setting that allows Claude to read CI results on PRs
           # additional_permissions: |
